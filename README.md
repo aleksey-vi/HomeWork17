@@ -34,29 +34,30 @@ https://github.com/mbfx/otus-linux-adm/tree/master/selinux_dns_problems
 
 Пакет nginx уже установлен с Vagrantfile-a предназначенного для данного ДЗ, то сразу зайдем в ``/etc/nginx/nginx.conf`` и поменяем стандартный 80-й порт на 11988.
 
-    systemctl restart nginx
+``systemctl restart nginx``
 
-Job for nginx.service failed because the control process exited with error code. See "systemctl status nginx.service" and "journalctl -xe" for details.
+    Job for nginx.service failed because the control process exited with error code. See "systemctl status nginx.service" and "journalctl -xe" for details.
 
-    journalctl -u nginx -n 20
+``journalctl -u nginx -n 20``
 
--- Logs begin at Ср 2020-09-02 08:07:08 UTC, end at Ср 2020-09-02 08:23:26 UTC.
-сен 02 08:21:35 otus systemd[1]: Unit nginx.service cannot be reloaded because i
-сен 02 08:23:25 otus systemd[1]: Starting The nginx HTTP and reverse proxy serve
-сен 02 08:23:26 otus nginx[17271]: nginx: the configuration file /etc/nginx/ngin
-сен 02 08:23:26 otus nginx[17271]: nginx: [emerg] bind() to 0.0.0.0:11988 failed
-сен 02 08:23:26 otus nginx[17271]: nginx: configuration file /etc/nginx/nginx.co
-сен 02 08:23:26 otus systemd[1]: nginx.service: control process exited, code=exi
-сен 02 08:23:26 otus systemd[1]: Failed to start The nginx HTTP and reverse prox
-сен 02 08:23:26 otus systemd[1]: Unit nginx.service entered failed state.
-сен 02 08:23:26 otus systemd[1]: nginx.service failed.
+
+      -- Logs begin at Ср 2020-09-02 08:07:08 UTC, end at Ср 2020-09-02 08:23:26 UTC.
+      сен 02 08:21:35 otus systemd[1]: Unit nginx.service cannot be reloaded because i
+      сен 02 08:23:25 otus systemd[1]: Starting The nginx HTTP and reverse proxy serve
+      сен 02 08:23:26 otus nginx[17271]: nginx: the configuration file /etc/nginx/ngin
+      сен 02 08:23:26 otus nginx[17271]: nginx: [emerg] bind() to 0.0.0.0:11988 failed  
+      сен 02 08:23:26 otus nginx[17271]: nginx: configuration file /etc/nginx/nginx.co
+      сен 02 08:23:26 otus systemd[1]: nginx.service: control process exited, code=exi
+      сен 02 08:23:26 otus systemd[1]: Failed to start The nginx HTTP and reverse prox
+      сен 02 08:23:26 otus systemd[1]: Unit nginx.service entered failed state.
+      сен 02 08:23:26 otus systemd[1]: nginx.service failed.
 
 
 Как описано по выводам команд сверху, selinux не позваляет nginx помен стандартный порт службы на 11988, для новых причин опять же воспользуемся audit2why, команда - ``audit2why < /var/log/audit/audit.log``.
 
-Утилита audit2why рекомендует выполнить команду - ``setsebool -P nis_enabled 1``. После выполнения данного логического значения по рекомендациям audit2whynginx успешно запускается.
+Утилита audit2why рекомендует выполнить команду - ``setsebool -P nis_enabled 1``. После выполнения данного логического значения по рекомендациям audit2why nginx успешно запускается.
 
-type=AVC msg=audit(1599035006.004:1208): avc:  denied  { name_bind } for  pid=17271 comm="nginx" src=11988 scontext=system_u:system_r:httpd_t:s0 tcontext=system_u:object_r:unreserved_port_t:s0 tclass=tcp_socket
+    type=AVC msg=audit(1599035006.004:1208): avc:  denied  { name_bind } for  pid=17271 comm="nginx" src=11988 scontext=system_u:system_r:httpd_t:s0 tcontext=system_u:object_r:unreserved_port_t:s0 tclass=tcp_socket
 
 	Was caused by:
 	The boolean nis_enabled was set incorrectly.
